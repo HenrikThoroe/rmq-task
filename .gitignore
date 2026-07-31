@@ -7,3 +7,6 @@
 /rmq-haskell/*.hi
 /rmq-haskell/*.o
 /rmq-csharp/*.exe
+/.venv
+/plots
+.DS_Store
