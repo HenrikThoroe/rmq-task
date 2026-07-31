@@ -4,6 +4,8 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from matplotlib import colors as mcolors
+
 os.makedirs("plots", exist_ok=True)
 
 df = pd.read_csv("data.csv")
@@ -11,16 +13,39 @@ df = pd.read_csv("data.csv")
 # Verify all methods produce the same checksum for each n (ignore NaN, e.g. skipped runs)
 checksums = df.pivot(index="n", columns="name", values="sum")
 ref = checksums.stack().groupby("n").first()  # first non-NaN per row
-assert (checksums.eq(ref, axis=0) | checksums.isna()).all(
-    axis=None
-), f"Checksum mismatch:\n{checksums}"
+assert (checksums.eq(ref, axis=0) | checksums.isna()).all(axis=None), (
+    f"Checksum mismatch:\n{checksums}"
+)
 
 plt.rcParams["axes.grid"] = True
 
 df["space"] = df["space"] * 8 / df["n"]  # bytes → bits per element
 
 names = sorted(df["name"].unique())
-colors = {name: f"C{i}" for i, name in enumerate(names)}
+color_names = [
+    # "lightcoral",
+    "firebrick",
+    # "tomato",
+    # "sienna",
+    # "peru",
+    "darkorange",
+    # "goldenrod",
+    "darkkhaki",
+    "olivedrab",
+    "greenyellow",
+    # "darkseagreen",
+    "green",
+    "mediumturquoise",
+    "darkslategrey",
+    "steelblue",
+    "dodgerblue",
+    "slateblue",
+    "mediumorchid",
+    "deeppink",
+    "crimson",
+]
+color_table = [mcolors.CSS4_COLORS[c] for c in color_names]
+colors = {name: color_table[i] for i, name in enumerate(names)}
 
 
 def pivot(field):
@@ -73,7 +98,7 @@ ax.set_xlabel("Space (bits/element)")
 ax.set_ylabel("Query time (ns/query)")
 ax.set_xscale("log", base=2)
 ax.set_yscale("log", base=2)
-ax.set_title(f"Space–time tradeoff (n={max_n})")
+ax.set_title(f"Space-time tradeoff (n={max_n})")
 ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=4)
 fig.tight_layout()
 fig.savefig("plots/space_time_tradeoff.png", dpi=150, bbox_inches="tight")
