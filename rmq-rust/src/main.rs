@@ -1,74 +1,12 @@
-use std::{
-    io::Read,
-    path::{Path, PathBuf},
+mod input;
+mod rmq;
+
+use input::{Input, read_input};
+use rmq::{
+    Rmq, block::BlockRmq, block::PrecomputeBlockRmq, cartesian::CartesianTree, naive::Naive,
+    segment_tree::SegmentTree, sparse_table::SparseTable, store::Store,
 };
-
-trait Rmq<'a> {
-    fn name() -> String;
-    /// To save time, only run benchmarks up to this n.
-    fn max_n() -> usize {
-        usize::MAX
-    }
-    fn build(data: &'a [u64]) -> Self;
-    /// Space usage in bytes.
-    fn space(&self) -> usize;
-    fn query(&self, l: usize, r: usize) -> u64;
-}
-
-/// Trivial implementation that computes each query on the fly.
-struct Naive<'a> {
-    data: &'a [u64],
-}
-impl<'a> Rmq<'a> for Naive<'a> {
-    fn name() -> String {
-        "QuadraticQuery".to_string()
-    }
-    fn max_n() -> usize {
-        // NOTE: Do not use this for the improved implementations!
-        10_000
-    }
-    fn build(data: &'a [u64]) -> Self {
-        Self { data }
-    }
-    fn space(&self) -> usize {
-        std::mem::size_of_val(self)
-    }
-    fn query(&self, l: usize, r: usize) -> u64 {
-        self.data[l..=r].iter().copied().min().unwrap()
-    }
-}
-
-// -------------------------------------------------------------
-// TODO: Implement the Rmq trait for additional data structures.
-// -------------------------------------------------------------
-
-/// The input data.
-struct Input {
-    data: Vec<u64>,
-    queries: Vec<(usize, usize)>,
-}
-
-/// Read the given input file.
-fn read_input(file: &Path) -> Input {
-    let mut input = String::new();
-    std::fs::File::open(file)
-        .expect("Open input file")
-        .read_to_string(&mut input)
-        .expect("Read input file");
-    let mut vals = input
-        .split_ascii_whitespace()
-        .map(|s| s.parse::<u64>().unwrap());
-    // First line has "{n} {q}"
-    let n: usize = vals.next().unwrap() as usize;
-    let q: usize = vals.next().unwrap() as usize;
-    // Then n lines "{ai}"
-    let data = vals.by_ref().take(n).collect();
-    // Then q lines "{l} {r}"
-    let queries = (0..q)
-        .map(|_| (vals.next().unwrap() as usize, vals.next().unwrap() as usize))
-        .collect();
-    Input { data, queries }
-}
+use std::path::PathBuf;
 
 /// Bench the given RMQ implementation on the given input, and print the results in CSV format.
 fn bench<'a, RMQ: Rmq<'a>>(input: &'a Input) {
@@ -120,6 +58,18 @@ fn main() {
     }
     for input in inputs {
         bench::<Naive>(&input);
-        // TODO: Add other implementations here.
+        bench::<Store>(&input);
+        bench::<SparseTable>(&input);
+        bench::<SegmentTree>(&input);
+        bench::<BlockRmq<4>>(&input);
+        bench::<BlockRmq<64>>(&input);
+        bench::<BlockRmq<512>>(&input);
+        bench::<PrecomputeBlockRmq<4>>(&input);
+        bench::<PrecomputeBlockRmq<64>>(&input);
+        bench::<PrecomputeBlockRmq<512>>(&input);
+        bench::<CartesianTree<6>>(&input);
+        bench::<CartesianTree<8>>(&input);
+        bench::<CartesianTree<16>>(&input);
+        bench::<CartesianTree<32>>(&input);
     }
 }
